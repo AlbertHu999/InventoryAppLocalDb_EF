@@ -2,18 +2,19 @@
 using System.ComponentModel;
 using System.Windows.Forms;
 
-namespace InventoryApp
-{
+namespace InventoryAppLocalDb;
+
     public partial class Form1 : Form
     {
-        // ✅ 改用 BindingList，不用 List
+        private readonly IProductRepository _repo;
         private BindingList<Product> _products = new BindingList<Product>();
         private BindingSource _bindingSource = new BindingSource();
-        private int _nextId = 1;
 
         public Form1()
         {
             InitializeComponent();
+            string connStr = "Host=localhost;Port=5432;Database=inventory_db;Username=postgres;Password=lemelserver";
+            _repo = new DapperProductRepository(connStr);
             InitializeForm();
         }
 
@@ -23,11 +24,10 @@ namespace InventoryApp
             cboCategory.SelectedIndex = 0;
             SetupDataGridView();
 
-            // ✅ 只設定一次，之後不需要重設
             _bindingSource.DataSource = _products;
             dgvProducts.DataSource = _bindingSource;
 
-            LoadSampleData();
+            LoadProducts();  // ← 改成從資料庫載入
 
             btnAdd.Click += btnAdd_Click;
             btnClear.Click += btnClear_Click;
@@ -90,18 +90,18 @@ namespace InventoryApp
             dgvProducts.AllowUserToAddRows = false;
         }
 
+        // ↓ 原本的 LoadSampleData() 改成這個
+        private void LoadProducts()
+        {
+            _products.Clear();
+            foreach (var p in _repo.GetAll())
+                _products.Add(p);
+            UpdateStatus();
+        }
+
         private void UpdateStatus()
         {
             lblStatus.Text = $"共 {_products.Count} 筆商品";
-        }
-
-        private void LoadSampleData()
-        {
-            // ✅ 直接加進 BindingList，畫面自動更新
-            _products.Add(new Product(_nextId++, "蘋果汁", 35.0, 100, "飲料"));
-            _products.Add(new Product(_nextId++, "礦泉水", 15.0, 8, "飲料"));
-            _products.Add(new Product(_nextId++, "USB充電線", 199.0, 30, "3C"));
-            UpdateStatus();
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
@@ -128,19 +128,18 @@ namespace InventoryApp
                 return;
             }
 
-            var product = new Product(
-                _nextId++,
-                txtName.Text.Trim(),
-                price,
-                stock,
-                cboCategory.SelectedItem?.ToString() ?? "其他"
-            );
+            var p = new Product
+            {
+                Name = txtName.Text.Trim(),
+                Price = price,
+                Stock = stock,
+                Category = cboCategory.SelectedItem?.ToString() ?? "其他"
+            };
 
-            // ✅ 直接加進 BindingList，畫面自動更新，不需要 RefreshGrid
-            _products.Add(product);
-            UpdateStatus();
+            _repo.Insert(p);      // ← 存進資料庫
+            LoadProducts();       // ← 重新從資料庫撈，畫面更新
             ClearInputs();
-            lblStatus.Text = $"✅ 已新增：{product.Name}";
+            lblStatus.Text = $"✅ 已新增：{p.Name}";
         }
 
         private void btnEdit_Click(object sender, EventArgs e)
@@ -151,17 +150,10 @@ namespace InventoryApp
             if (detailForm.ShowDialog() == DialogResult.OK)
             {
                 var edited = detailForm.EditedProduct;
+                edited.Id = selected.Id;  // ← 確保 id 帶過去
 
-                // ✅ 直接修改 BindingList 裡的物件屬性
-                selected.Name = edited.Name;
-                selected.Price = edited.Price;
-                selected.Stock = edited.Stock;
-                selected.Category = edited.Category;
-
-                // ✅ 通知 BindingList 資料有變動，畫面自動更新
-                var idx = _products.IndexOf(selected);
-                _products.ResetItem(idx);
-
+                _repo.Update(edited);     // ← 更新資料庫
+                LoadProducts();           // ← 重新撈
                 lblStatus.Text = $"✅ 已編輯：{edited.Name}";
             }
         }
@@ -179,10 +171,9 @@ namespace InventoryApp
 
             if (confirm == DialogResult.Yes)
             {
-                // ✅ 一行搞定，BindingSource 自動同步
-                _bindingSource.RemoveCurrent();
+                _repo.Delete(selected.Id);  // ← 從資料庫刪除
+                LoadProducts();             // ← 重新撈
                 lblStatus.Text = $"🗑️ 已刪除：{selected.Name}";
-                UpdateStatus();
             }
         }
 
@@ -212,8 +203,6 @@ namespace InventoryApp
         {
             string keyword = txtSearch.Text.Trim().ToLower();
 
-            // ✅ 搜尋時建立篩選後的 BindingList
-            // BindingList 不支援 Filter，所以用這個方式
             var filtered = string.IsNullOrEmpty(keyword)
                 ? _products
                 : new BindingList<Product>(
@@ -228,5 +217,6 @@ namespace InventoryApp
                 ? $"共 {_products.Count} 筆商品"
                 : $"搜尋「{keyword}」找到 {filtered.Count} 筆";
         }
+
+        private void Form1_Load(object sender, EventArgs e) { }
     }
-}

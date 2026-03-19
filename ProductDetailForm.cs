@@ -1,5 +1,5 @@
 ﻿#nullable disable
-namespace InventoryApp
+namespace InventoryAppLocalDb
 {
     public partial class ProductDetailForm : Form
     {

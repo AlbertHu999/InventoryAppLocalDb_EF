@@ -1,4 +1,4 @@
-﻿namespace InventoryApp
+﻿namespace InventoryAppLocalDb
 {
     public class Product
     {
@@ -18,5 +18,6 @@
             Stock = stock;
             Category = category;
         }
+        public Product() { }
     }
 }

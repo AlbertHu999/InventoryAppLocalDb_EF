@@ -1,4 +1,4 @@
-﻿namespace InventoryApp
+﻿namespace InventoryAppLocalDb
 {
     partial class ProductDetailForm
     {

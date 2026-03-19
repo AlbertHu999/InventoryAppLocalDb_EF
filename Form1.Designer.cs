@@ -1,4 +1,4 @@
-﻿namespace InventoryApp
+﻿namespace InventoryAppLocalDb
 {
     partial class Form1
     {
@@ -204,6 +204,7 @@
             Controls.Add(label1);
             Name = "Form1";
             Text = "進銷存管理系統";
+            Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgvProducts).EndInit();
             ResumeLayout(false);
             PerformLayout();
