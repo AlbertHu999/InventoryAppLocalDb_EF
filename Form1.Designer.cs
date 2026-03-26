@@ -44,6 +44,7 @@
             txtSearch = new TextBox();
             dgvProducts = new DataGridView();
             lblStatus = new Label();
+            btnStats = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvProducts).BeginInit();
             SuspendLayout();
             // 
@@ -181,11 +182,22 @@
             lblStatus.TabIndex = 15;
             lblStatus.Text = "共0筆商品";
             // 
+            // btnStats
+            // 
+            btnStats.Location = new Point(427, 167);
+            btnStats.Name = "btnStats";
+            btnStats.Size = new Size(75, 23);
+            btnStats.TabIndex = 16;
+            btnStats.Text = "統計";
+            btnStats.UseVisualStyleBackColor = true;
+            btnStats.Click += btnStats_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(784, 561);
+            Controls.Add(btnStats);
             Controls.Add(lblStatus);
             Controls.Add(dgvProducts);
             Controls.Add(txtSearch);
@@ -228,5 +240,6 @@
         private TextBox txtSearch;
         private DataGridView dgvProducts;
         private Label lblStatus;
+        private Button btnStats;
     }
 }
